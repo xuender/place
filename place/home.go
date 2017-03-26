@@ -15,7 +15,7 @@ func ToPath(path string) string {
 	dir := strings.Replace(path, "~", home, 1)
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		log.Debugf("目录 %s 不存在, 创建", dir)
-		err := os.Mkdir(dir, 0777)
+		err := os.MkdirAll(dir, 0777)
 		if err != nil {
 			panic("目录创建失败")
 		}
