@@ -17,20 +17,22 @@ type Place struct {
 	ConfigPath string
 	Config     Config
 	Db         *leveldb.DB
-	Demo       bool
+	Preview    bool
 	Number     int
-	Files      map[string]string
+	History    History
 }
 
 func (p *Place) Run(files []string) {
 	p.loadConfig()
 	p.getNumber()
-	p.Files = make(map[string]string)
+	p.History.Files = make(map[string]string)
 	log.Debug("Run:", files)
 	for _, v := range files {
 		p.run(v)
 	}
-	p.saveHistory()
+	if !p.Preview {
+		p.saveHistory()
+	}
 }
 
 func (p *Place) getNumber() {
@@ -43,14 +45,11 @@ func (p *Place) getNumber() {
 }
 
 func (p *Place) saveHistory() {
-	log.Debugf("保存历史: %v", p.Files)
-	h := History{
-		Timestamp: time.Now(),
-		Files:     p.Files,
-	}
+	log.Debugf("保存历史: %v", p.History.Files)
+	p.History.Timestamp = time.Now()
 	bf := bytes.NewBuffer(nil)
 	enc := gob.NewEncoder(bf)
-	err := enc.Encode(h)
+	err := enc.Encode(p.History)
 	if err != nil {
 		panic("操作记录编码失败")
 	}
@@ -99,9 +98,9 @@ func (p *Place) move(mime string, subtype string, file string) {
 	for _, path := range p.Config.Paths {
 		if path.Mime == mime && path.Subtype == subtype {
 			dir := ToPath(path.Dir)
-			p.Files[file] = dir
+			p.History.Files[file] = dir
 			log.Infof("文件: %s >>> %s", file, dir)
-			if p.Demo {
+			if p.Preview {
 				log.Debug("演示执行...")
 			} else {
 				log.Debug("真实执行...")

@@ -11,6 +11,7 @@ import (
 )
 
 type History struct {
+	Args      []string
 	Timestamp time.Time
 	Files     map[string]string
 }
@@ -20,7 +21,7 @@ func ShowHistory(db *leveldb.DB) {
 	name := []byte("count")
 	bs, _ := db.Get(name, nil)
 	number := Bytes2Int(bs)
-	for i := 1; i <= int(number); i++ {
+	for i := number; i > 0; i-- {
 		data, err := db.Get(Int2Bytes(i), nil)
 		if err != nil {
 			log.Error(err)
@@ -29,9 +30,9 @@ func ShowHistory(db *leveldb.DB) {
 			buf := bytes.NewBuffer(data)
 			dec := gob.NewDecoder(buf)
 			dec.Decode(&h)
-			log.Infof("第 %d 操作， 时间: %s", i, h.Timestamp.Format("2006-01-02 15:04:05"))
+			log.Infof("%03d [ %s ] 参数: %s", i, h.Timestamp.Format("2006-01-02 15:04:05"), h.Args)
 			for k, v := range h.Files {
-				log.Infof("文件 %s >>> %s", k, v)
+				log.Infof("    %s >>> %s", k, v)
 			}
 		}
 	}

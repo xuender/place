@@ -32,44 +32,83 @@ func main() {
 			Value: "~/.place",
 			Usage: "配置文件保存目录",
 		},
-		cli.BoolFlag{
-			Name:  "history, i",
-			Usage: "显示操作历史",
-		},
-		cli.BoolFlag{
-			Name:  "demo, o",
-			Usage: "演示操作",
-		},
 	}
 
-	app.Action = func(c *cli.Context) error {
-		if c.NArg() == 0 && !c.Bool("history") {
-			return cli.ShowAppHelp(c)
-		}
-		db, err := leveldb.OpenFile(place.ToPath(c.String("config")+"/"+"db"), nil)
-		defer db.Close()
-		if c.Bool("history") {
-			place.ShowHistory(db)
-			return nil
-		}
-		if c.Bool("debug") {
-			log.SetLevel(log.DebugLevel)
-		}
+	app.Commands = []cli.Command{
+		{
+			Name:    "move",
+			Aliases: []string{"m"},
+			Usage:   "移动文件、目录",
+			Action: func(c *cli.Context) error {
+				actionInit(c)
+				log.Info("移动操作")
 
-		log.Debug("调试状态: ", c.Bool("debug"))
-		log.Debug("配置文件目录: ", c.String("config"))
-		log.Debug("输入文件: ", c.Args())
+				db, err := leveldb.OpenFile(place.ToPath(c.GlobalString("config")+"/"+"db"), nil)
+				defer db.Close()
+				if err != nil {
+					panic("数据库创建失败")
+				}
 
-		if err != nil {
-			panic("数据库创建失败")
-		}
-		p := &place.Place{
-			ConfigPath: c.String("config"),
-			Db:         db,
-			Demo:       c.Bool("demo"),
-		}
-		p.Run(c.Args())
-		return nil
+				p := &place.Place{
+					ConfigPath: c.GlobalString("config"),
+					Db:         db,
+					Preview:    false,
+					History: place.History{
+						Args: os.Args[1:],
+					},
+				}
+				p.Run(c.Args())
+				return nil
+			},
+		},
+		{
+			Name:    "preview",
+			Aliases: []string{"p"},
+			Usage:   "预览移动文件、目录",
+			Action: func(c *cli.Context) error {
+				actionInit(c)
+				log.Info("预览操作")
+
+				db, err := leveldb.OpenFile(place.ToPath(c.GlobalString("config")+"/"+"db"), nil)
+				defer db.Close()
+				if err != nil {
+					panic("数据库创建失败")
+				}
+
+				p := &place.Place{
+					ConfigPath: c.GlobalString("config"),
+					Db:         db,
+					Preview:    true,
+				}
+				p.Run(c.Args())
+				return nil
+			},
+		},
+		{
+			Name:    "list",
+			Aliases: []string{"l"},
+			Usage:   "历史列表",
+			Action: func(c *cli.Context) error {
+				actionInit(c)
+				log.Info("历史操作")
+				db, err := leveldb.OpenFile(place.ToPath(c.GlobalString("config")+"/"+"db"), nil)
+				defer db.Close()
+				if err != nil {
+					panic("数据库创建失败")
+				}
+				place.ShowHistory(db)
+				return nil
+			},
+		},
 	}
 	app.Run(os.Args)
+}
+
+func actionInit(c *cli.Context) {
+	if c.GlobalBool("debug") {
+		log.SetLevel(log.DebugLevel)
+	}
+
+	log.Debug("调试状态: ", c.GlobalBool("debug"))
+	log.Debug("配置文件目录: ", c.GlobalString("config"))
 }
