@@ -1,14 +1,17 @@
 package place
+
 import (
-	"os"
-	log "github.com/Sirupsen/logrus"
 	"encoding/json"
 	"io/ioutil"
+	"os"
+
+	log "github.com/Sirupsen/logrus"
 )
+
 type Path struct {
-	Mime string
+	Mime    string
 	Subtype string
-	Dir string
+	Dir     string
 }
 
 type Config struct {
@@ -47,4 +50,3 @@ func (c *Config) def() {
 	jpeg := &Path{"image", "jpeg", "~/图片/照片"}
 	c.Paths = []*Path{png, jpeg}
 }
-

@@ -1,24 +1,25 @@
 package place
 
 import (
-	"os"
-	log "github.com/Sirupsen/logrus"
-	"io/ioutil"
-	"gopkg.in/h2non/filetype.v1"
-	"crypto/sha256"
-	"github.com/syndtr/goleveldb/leveldb"
 	"bytes"
-	"encoding/binary"
-	"time"
+	"crypto/sha256"
 	"encoding/gob"
+	"io/ioutil"
+	"os"
+	"time"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/syndtr/goleveldb/leveldb"
+	"gopkg.in/h2non/filetype.v1"
 )
 
 type Place struct {
-	ConfigPath	string
-	Config Config
-	Db *leveldb.DB
-	Number int32
-	Files map[string]string
+	ConfigPath string
+	Config     Config
+	Db         *leveldb.DB
+	Demo       bool
+	Number     int
+	Files      map[string]string
 }
 
 func (p *Place) Run(files []string) {
@@ -34,7 +35,7 @@ func (p *Place) Run(files []string) {
 
 func (p *Place) getNumber() {
 	name := []byte("count")
-	bs , _:= p.Db.Get(name, nil)
+	bs, _ := p.Db.Get(name, nil)
 	p.Number = Bytes2Int(bs)
 	p.Number += 1
 	log.Debugf("操作次数: %d", p.Number)
@@ -45,18 +46,15 @@ func (p *Place) saveHistory() {
 	log.Debugf("保存历史: %v", p.Files)
 	h := History{
 		Timestamp: time.Now(),
-		Files: p.Files,
+		Files:     p.Files,
 	}
-	buf := bytes .NewBuffer(nil)
-	binary.Write(buf, binary.BigEndian, p.Number)
 	bf := bytes.NewBuffer(nil)
 	enc := gob.NewEncoder(bf)
 	err := enc.Encode(h)
 	if err != nil {
 		panic("操作记录编码失败")
 	}
-	p.Db.Put(buf.Bytes(), bf.Bytes(), nil)
-
+	p.Db.Put(Int2Bytes(p.Number), bf.Bytes(), nil)
 }
 
 func (p *Place) loadConfig() {
@@ -65,17 +63,17 @@ func (p *Place) loadConfig() {
 }
 
 func (p *Place) run(file string) {
-	info, err := os.Stat(file);
+	info, err := os.Stat(file)
 	if os.IsNotExist(err) {
 		log.Error("文件未找到: ", file)
-		return;
+		return
 	}
 
 	log.Debugf("%s 目录: %t", file, info.IsDir())
 	if info.IsDir() {
 		log.Info("处理目录: ", file)
 	} else {
-		log.Info("处理文件: ", file)
+		log.Debug("处理文件: ", file)
 		buf, _ := ioutil.ReadFile(file)
 		head := buf[:261]
 		if filetype.IsImage(head) {
@@ -102,8 +100,14 @@ func (p *Place) move(mime string, subtype string, file string) {
 		if path.Mime == mime && path.Subtype == subtype {
 			dir := ToPath(path.Dir)
 			p.Files[file] = dir
-			log.Debugf("文件: %s >>> %s", file, dir)
-			return;
+			log.Infof("文件: %s >>> %s", file, dir)
+			if p.Demo {
+				log.Debug("演示执行...")
+			} else {
+				log.Debug("真实执行...")
+				// TODO 文件移动
+			}
+			return
 		}
 	}
 }

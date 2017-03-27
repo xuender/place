@@ -2,10 +2,11 @@ package main
 
 import (
 	"os"
-	"github.com/urfave/cli"
+
+	"./place"
 	log "github.com/Sirupsen/logrus"
 	"github.com/syndtr/goleveldb/leveldb"
-	"./place"
+	"github.com/urfave/cli"
 )
 
 func main() {
@@ -13,28 +14,31 @@ func main() {
 	app.Name = "place"
 	app.Usage = "自动移动文件分类存储."
 	app.Version = "0.0.1"
-	app.Authors = []cli.Author {
+	app.Authors = []cli.Author{
 		cli.Author{
-			Name: "xuender",
+			Name:  "xuender",
 			Email: "xuender@139.com",
 		},
 	}
 
-	app.Flags = []cli.Flag {
+	app.Flags = []cli.Flag{
 		cli.BoolFlag{
-			Name: "debug, d",
-			Usage: "调试模式",
+			Name:   "debug, d",
+			Usage:  "调试模式",
 			Hidden: false,
 		},
 		cli.StringFlag{
-			Name: "config, c",
+			Name:  "config, c",
 			Value: "~/.place",
 			Usage: "配置文件保存目录",
 		},
 		cli.BoolFlag{
-			Name: "history, i",
+			Name:  "history, i",
 			Usage: "显示操作历史",
-			Hidden: false,
+		},
+		cli.BoolFlag{
+			Name:  "demo, o",
+			Usage: "演示操作",
 		},
 	}
 
@@ -42,7 +46,7 @@ func main() {
 		if c.NArg() == 0 && !c.Bool("history") {
 			return cli.ShowAppHelp(c)
 		}
-		db, err := leveldb.OpenFile(place.ToPath(c.String("config") + "/" + "db"), nil)
+		db, err := leveldb.OpenFile(place.ToPath(c.String("config")+"/"+"db"), nil)
 		defer db.Close()
 		if c.Bool("history") {
 			place.ShowHistory(db)
@@ -61,7 +65,8 @@ func main() {
 		}
 		p := &place.Place{
 			ConfigPath: c.String("config"),
-			Db: db,
+			Db:         db,
+			Demo:       c.Bool("demo"),
 		}
 		p.Run(c.Args())
 		return nil

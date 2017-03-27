@@ -1,18 +1,19 @@
 package place
+
 import (
 	"bytes"
 	"encoding/binary"
 )
 
-func Int2Bytes(num int32) []byte {
+func Int2Bytes(num int) []byte {
 	buf := bytes.NewBuffer(nil)
-	binary.Write(buf, binary.BigEndian, num)
+	binary.Write(buf, binary.BigEndian, int32(num))
 	return buf.Bytes()
 }
 
-func Bytes2Int(bs []byte) int32 {
+func Bytes2Int(bs []byte) int {
 	buf := bytes.NewBuffer(bs)
 	var number int32
 	binary.Read(buf, binary.BigEndian, &number)
-	return number
+	return int(number)
 }

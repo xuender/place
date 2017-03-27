@@ -1,13 +1,15 @@
 package place
+
 import (
-	log "github.com/Sirupsen/logrus"
+	"bytes"
+	"errors"
 	"os"
+	"os/exec"
 	"os/user"
 	"runtime"
-	"bytes"
-	"os/exec"
 	"strings"
-	"errors"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 func ToPath(path string) string {
@@ -29,24 +31,18 @@ func Home() (string, error) {
 		return user.HomeDir, nil
 	}
 
-	// cross compile support
-
 	if "windows" == runtime.GOOS {
 		return homeWindows()
 	}
 
-	// Unix-like system, so just assume Unix
 	return homeUnix()
 }
 
-
 func homeUnix() (string, error) {
-	// First prefer the HOME environmental variable
 	if home := os.Getenv("HOME"); home != "" {
 		return home, nil
 	}
 
-	// If that fails, try the shell
 	var stdout bytes.Buffer
 	cmd := exec.Command("sh", "-c", "eval echo ~$USER")
 	cmd.Stdout = &stdout
