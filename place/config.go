@@ -9,13 +9,14 @@ import (
 )
 
 type Path struct {
-	Mime    string
-	Subtype string
-	Dir     string
+	Dir     string `json:"dir"`
+	Mime    string `json:"mime"`
+	Subtype string `json:"subtype"`
+	Ext     string `json:"ext,omitempty"`
 }
 
 type Config struct {
-	Paths []*Path
+	Paths []*Path `json:"paths"`
 }
 
 func (c *Config) Load(configPath string) {
@@ -46,7 +47,9 @@ func (c *Config) Load(configPath string) {
 
 func (c *Config) def() {
 	log.Debug("创建默认设置")
-	png := &Path{"image", "png", "~/图片/截图"}
-	jpeg := &Path{"image", "jpeg", "~/图片/照片"}
-	c.Paths = []*Path{png, jpeg}
+	png := &Path{"~/图片/截图", "image", "png", ""}
+	jpeg := &Path{"~/图片/照片", "image", "jpeg", ""}
+	xmind := &Path{"~/文档/设计", "application", "zip", ".xmind"}
+
+	c.Paths = []*Path{jpeg, png, xmind}
 }

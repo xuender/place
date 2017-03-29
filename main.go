@@ -40,15 +40,10 @@ func main() {
 			Aliases: []string{"m"},
 			Usage:   "移动文件、目录",
 			Action: func(c *cli.Context) error {
+				db := getDb(c)
+				defer db.Close()
 				actionInit(c)
 				log.Info("移动操作")
-
-				db, err := leveldb.OpenFile(place.ToPath(c.GlobalString("config")+"/"+"db"), nil)
-				defer db.Close()
-				if err != nil {
-					panic("数据库创建失败")
-				}
-
 				p := &place.Place{
 					ConfigPath: c.GlobalString("config"),
 					Db:         db,
@@ -66,15 +61,10 @@ func main() {
 			Aliases: []string{"p"},
 			Usage:   "预览移动文件、目录",
 			Action: func(c *cli.Context) error {
+				db := getDb(c)
+				defer db.Close()
 				actionInit(c)
 				log.Info("预览操作")
-
-				db, err := leveldb.OpenFile(place.ToPath(c.GlobalString("config")+"/"+"db"), nil)
-				defer db.Close()
-				if err != nil {
-					panic("数据库创建失败")
-				}
-
 				p := &place.Place{
 					ConfigPath: c.GlobalString("config"),
 					Db:         db,
@@ -88,15 +78,43 @@ func main() {
 			Name:    "list",
 			Aliases: []string{"l"},
 			Usage:   "历史列表",
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:   "clean, c",
+					Usage:  "显示后，清除操作日志",
+					Hidden: false,
+				},
+			},
 			Action: func(c *cli.Context) error {
-				actionInit(c)
-				log.Info("历史操作")
-				db, err := leveldb.OpenFile(place.ToPath(c.GlobalString("config")+"/"+"db"), nil)
+				db := getDb(c)
 				defer db.Close()
-				if err != nil {
-					panic("数据库创建失败")
-				}
+				actionInit(c)
 				place.ShowHistory(db)
+				if c.Bool("clean") {
+					place.CleanHistory(db)
+				}
+				return nil
+			},
+		},
+		{
+			Name:    "files",
+			Aliases: []string{"f"},
+			Usage:   "文件信息",
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:   "clean, c",
+					Usage:  "显示后，清除文件信息记录",
+					Hidden: false,
+				},
+			},
+			Action: func(c *cli.Context) error {
+				db := getDb(c)
+				defer db.Close()
+				actionInit(c)
+				place.ShowFiles(db)
+				if c.Bool("clean") {
+					place.CleanFiles(db)
+				}
 				return nil
 			},
 		},
@@ -104,11 +122,17 @@ func main() {
 	app.Run(os.Args)
 }
 
+func getDb(c *cli.Context) *leveldb.DB {
+	db, err := leveldb.OpenFile(place.ToPath(c.GlobalString("config")+"/"+"db"), nil)
+	if err != nil {
+		panic("数据库创建失败")
+	}
+	return db
+}
 func actionInit(c *cli.Context) {
 	if c.GlobalBool("debug") {
 		log.SetLevel(log.DebugLevel)
 	}
-
 	log.Debug("调试状态: ", c.GlobalBool("debug"))
 	log.Debug("配置文件目录: ", c.GlobalString("config"))
 }
