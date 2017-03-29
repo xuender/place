@@ -10,8 +10,8 @@ import (
 
 type Path struct {
 	Dir     string `json:"dir"`
-	Mime    string `json:"mime"`
-	Subtype string `json:"subtype"`
+	Mime    string `json:"mime,omitempty"`
+	Subtype string `json:"subtype,omitempty"`
 	Ext     string `json:"ext,omitempty"`
 }
 

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/gob"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -74,25 +75,31 @@ func (p *Place) run(file string) {
 		log.Info("处理目录: ", file)
 	} else {
 		log.Debug("处理文件: ", file)
-		buf, _ := ioutil.ReadFile(file)
-		head := buf[:261]
+		bs, _ := ioutil.ReadFile(file)
+		head := bs[:261]
 		if filetype.IsImage(head) {
 			log.Debugf("文件 %s 是图片", file)
 		} else {
 			log.Debugf("文件 %s 不是图片", file)
 		}
+		hash := sha256.New()
+		hash.Write(bs)
+		log.Debugf("%s sha256: %x", file, hash.Sum(nil))
 		kind, _ := filetype.Match(head)
 		if kind == filetype.Unknown {
 			log.Debug("未知的文件类型")
 		} else {
 			log.Debugf("扩展文件名: %s type: %s, subType: %s", path.Ext(file), kind.MIME.Type, kind.MIME.Subtype)
-			hash := sha256.New()
-			hash.Write(buf)
-			log.Debugf("%s sha256: %x", file, hash.Sum(nil))
 			old := p.find(hash.Sum(nil))
 			if old == "" {
-				newFile := p.move(kind.MIME.Type, kind.MIME.Subtype, file)
-				p.Db.Put(BytesPrefix("f-", hash.Sum(nil)), []byte(newFile), nil)
+				newFile, err := p.move(kind.MIME.Type, kind.MIME.Subtype, file)
+				if err == nil {
+					if !p.Preview {
+						p.Db.Put(BytesPrefix("f-", hash.Sum(nil)), []byte(newFile), nil)
+					}
+				} else {
+					log.Errorf("%s: %s", file, err)
+				}
 			} else {
 				log.Warnf("文件 %s 重复, 原文件 %s", file, old)
 			}
@@ -108,26 +115,32 @@ func (p *Place) find(hash []byte) string {
 	return string(file)
 }
 
-func (p *Place) move(mime string, subtype string, file string) string {
+func (p *Place) move(mime string, subtype string, file string) (string, error) {
 	log.Debugf("mime: %s, subtype: %s, 搬移文件: %s", mime, subtype, file)
 	ext := path.Ext(file)
-	for _, path := range p.Config.Paths {
-		if path.Mime == mime && path.Subtype == subtype {
-			if path.Ext != "" || path.Ext == ext {
-				dir := ToPath(path.Dir)
+	for _, ap := range p.Config.Paths {
+		if ap.Mime == mime && ap.Subtype == subtype {
+			if ap.Ext == "" || ap.Ext == ext {
+				dir := ToPath(ap.Dir)
 				p.History.Files[file] = dir
-				log.Infof("文件: %s >>> %s", file, dir)
-				if p.Preview {
-					log.Debug("演示执行...")
-					return file
+				newFile := dir + "/" + path.Base(file)
+				info, err := os.Stat(newFile)
+				if os.IsNotExist(err) {
+					if p.Preview {
+						log.Infof("预览: %s >>> %s", file, newFile)
+					} else {
+						log.Infof("移动: %s >>> %s", file, newFile)
+						os.Rename(file, newFile)
+					}
+					return newFile, nil
+				}
+				if info.IsDir() {
+					return file, errors.New("同名目录已经存在")
 				} else {
-					log.Debug("真实执行...")
-					// TODO 文件移动
-					// TODO 移动成功 后的文件
-					return file
+					return file, errors.New("同名文件已经存在")
 				}
 			}
 		}
 	}
-	return file
+	return file, errors.New("无匹配目录")
 }
