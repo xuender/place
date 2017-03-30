@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"path"
 
 	"./place"
 	log "github.com/Sirupsen/logrus"
@@ -118,12 +119,29 @@ func main() {
 				return nil
 			},
 		},
+		{
+			Name:    "scan",
+			Aliases: []string{"s"},
+			Usage:   "目录扫描",
+			Action: func(c *cli.Context) error {
+				db := getDb(c)
+				defer db.Close()
+				actionInit(c)
+				p := &place.Place{
+					ConfigPath: c.GlobalString("config"),
+					Db:         db,
+					Preview:    false,
+				}
+				p.Scan()
+				return nil
+			},
+		},
 	}
 	app.Run(os.Args)
 }
 
 func getDb(c *cli.Context) *leveldb.DB {
-	db, err := leveldb.OpenFile(place.ToPath(c.GlobalString("config")+"/"+"db"), nil)
+	db, err := leveldb.OpenFile(place.ToPath(path.Join(c.GlobalString("config"), "db")), nil)
 	if err != nil {
 		panic("数据库创建失败")
 	}

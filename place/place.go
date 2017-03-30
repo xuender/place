@@ -9,10 +9,12 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/syndtr/goleveldb/leveldb"
+	"github.com/syndtr/goleveldb/leveldb/util"
 	"gopkg.in/h2non/filetype.v1"
 )
 
@@ -23,6 +25,7 @@ type Place struct {
 	Preview    bool
 	Number     int
 	History    History
+	TmpFile    map[string][]byte
 }
 
 func (p *Place) Run(files []string) {
@@ -123,7 +126,7 @@ func (p *Place) move(mime string, subtype string, file string) (string, error) {
 			if ap.Ext == "" || ap.Ext == ext {
 				dir := ToPath(ap.Dir)
 				p.History.Files[file] = dir
-				newFile := dir + "/" + path.Base(file)
+				newFile := path.Join(dir, path.Base(file))
 				info, err := os.Stat(newFile)
 				if os.IsNotExist(err) {
 					if p.Preview {
@@ -143,4 +146,61 @@ func (p *Place) move(mime string, subtype string, file string) (string, error) {
 		}
 	}
 	return file, errors.New("无匹配目录")
+}
+
+func (p *Place) Scan() {
+	log.Info("开始目录扫描")
+	p.loadConfig()
+
+	p.TmpFile = make(map[string][]byte)
+	iter := p.Db.NewIterator(util.BytesPrefix([]byte("f-")), nil)
+	for iter.Next() {
+		file := string(iter.Value())
+		p.TmpFile[file] = iter.Key()
+		log.Debug("缓存文件: ", file)
+	}
+	iter.Release()
+
+	for _, ap := range p.Config.Paths {
+		log.Debug("扫描目录: ", ap.Dir)
+		p.scanning(ToPath(ap.Dir))
+	}
+
+	for file, key := range p.TmpFile {
+		log.Debug("删除缓存: ", file)
+		p.Db.Delete(key, nil)
+	}
+}
+
+func (p *Place) scanning(dir string) {
+	err := filepath.Walk(dir, func(filename string, fi os.FileInfo, err error) error {
+		if filename == dir {
+			return nil
+		}
+		if fi.IsDir() {
+			p.scanning(filename)
+		} else {
+			log.Debug("扫描文件: ", filename)
+			_, ok := p.TmpFile[filename]
+			if ok {
+				delete(p.TmpFile, filename)
+			} else {
+				bs, _ := ioutil.ReadFile(filename)
+				hash := sha256.New()
+				hash.Write(bs)
+				key := BytesPrefix("f-", hash.Sum(nil))
+				old, err := p.Db.Get(key, nil)
+				if err == nil {
+					log.Warnf("文件重复: %s = %s", filename, old)
+				} else {
+					log.Info("新增文件: ", filename)
+					p.Db.Put(key, []byte(filename), nil)
+				}
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		log.Error("目录扫描错误: ", err)
+	}
 }

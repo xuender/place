@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
+	"path"
 
 	log "github.com/Sirupsen/logrus"
 )
@@ -22,7 +23,7 @@ type Config struct {
 func (c *Config) Load(configPath string) {
 	dir := ToPath(configPath)
 
-	file := dir + "/" + "config.json"
+	file := path.Join(dir, "config.json")
 	log.Debug("加载配置: ", file)
 	if _, err := os.Stat(file); os.IsNotExist(err) {
 		log.Debugf("%s 不存在，创建", file)
