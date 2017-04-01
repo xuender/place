@@ -145,7 +145,7 @@ func (p *Place) move(mime string, subtype string, file string) (string, error) {
 			}
 		}
 	}
-	return file, errors.New("无匹配目录")
+	return file, errors.New("无匹配设置")
 }
 
 func (p *Place) Scan() {
