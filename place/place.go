@@ -16,6 +16,7 @@ import (
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/util"
 	"gopkg.in/h2non/filetype.v1"
+	"gopkg.in/h2non/filetype.v1/types"
 )
 
 type Place struct {
@@ -95,7 +96,7 @@ func (p *Place) run(file string) {
 			log.Debugf("扩展文件名: %s type: %s, subType: %s", path.Ext(file), kind.MIME.Type, kind.MIME.Subtype)
 			old := p.find(hash.Sum(nil))
 			if old == "" {
-				newFile, err := p.move(kind.MIME.Type, kind.MIME.Subtype, file)
+				newFile, err := p.move(kind, file, info)
 				if err == nil {
 					if !p.Preview {
 						p.Db.Put(BytesPrefix("f-", hash.Sum(nil)), []byte(newFile), nil)
@@ -118,13 +119,17 @@ func (p *Place) find(hash []byte) string {
 	return string(file)
 }
 
-func (p *Place) move(mime string, subtype string, file string) (string, error) {
-	log.Debugf("mime: %s, subtype: %s, 搬移文件: %s", mime, subtype, file)
+func (p *Place) move(t types.Type, file string, info os.FileInfo) (string, error) {
+	log.Debugf("mime: %s, subtype: %s, 搬移文件: %s", t.MIME.Type, t.MIME.Subtype, file)
 	ext := path.Ext(file)
 	for _, ap := range p.Config.Paths {
-		if ap.Mime == mime && ap.Subtype == subtype {
+		if ap.Mime == t.MIME.Type && ap.Subtype == t.MIME.Subtype {
 			if ap.Ext == "" || ap.Ext == ext {
-				dir := ToPath(ap.Dir)
+				newDir := ap.Dir
+				if ap.Subdir != "" {
+					newDir = path.Join(newDir, TimeFormat(info.ModTime(), ap.Subdir))
+				}
+				dir := ToPath(newDir)
 				p.History.Files[file] = dir
 				newFile := path.Join(dir, path.Base(file))
 				info, err := os.Stat(newFile)

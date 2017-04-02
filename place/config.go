@@ -14,6 +14,7 @@ type Path struct {
 	Mime    string `json:"mime,omitempty"`
 	Subtype string `json:"subtype,omitempty"`
 	Ext     string `json:"ext,omitempty"`
+	Subdir  string `json:"subdir,omitempty"`
 }
 
 type Config struct {
@@ -48,9 +49,23 @@ func (c *Config) Load(configPath string) {
 
 func (c *Config) def() {
 	log.Debug("创建默认设置")
-	png := &Path{"~/图片/截图", "image", "png", ""}
-	jpeg := &Path{"~/图片/照片", "image", "jpeg", ""}
-	xmind := &Path{"~/文档/设计", "application", "zip", ".xmind"}
-
-	c.Paths = []*Path{jpeg, png, xmind}
+	c.Paths = []*Path{
+		&Path{
+			Dir:     "~/图片/截图",
+			Mime:    "image",
+			Subtype: "png",
+		},
+		&Path{
+			Dir:     "~/图片/照片",
+			Mime:    "image",
+			Subtype: "jpeg",
+			Subdir:  "yyyy/mm",
+		},
+		&Path{
+			Dir:     "~/文档/设计",
+			Mime:    "application",
+			Subtype: "zip",
+			Ext:     ".xmind",
+		},
+	}
 }
