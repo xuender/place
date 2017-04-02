@@ -123,6 +123,12 @@ func main() {
 			Name:    "scan",
 			Aliases: []string{"s"},
 			Usage:   "目录扫描",
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  "reset,r",
+					Usage: "根据配置重置文件位置",
+				},
+			},
 			Action: func(c *cli.Context) error {
 				db := getDb(c)
 				defer db.Close()
@@ -133,6 +139,9 @@ func main() {
 					Preview:    false,
 				}
 				p.Scan()
+				if c.Bool("reset") {
+					p.Reset()
+				}
 				return nil
 			},
 		},

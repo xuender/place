@@ -96,9 +96,14 @@ func (p *Place) run(file string) {
 			log.Debugf("扩展文件名: %s type: %s, subType: %s", path.Ext(file), kind.MIME.Type, kind.MIME.Subtype)
 			old := p.find(hash.Sum(nil))
 			if old == "" {
-				newFile, err := p.move(kind, file, info)
+				newFile, err := p.moveName(kind, file, info)
 				if err == nil {
-					if !p.Preview {
+					if p.Preview {
+						log.Infof("预览: %s >>> %s", file, newFile)
+					} else {
+						log.Infof("移动: %s >>> %s", file, newFile)
+						p.History.Files[file] = newFile
+						os.Rename(file, newFile)
 						p.Db.Put(BytesPrefix("f-", hash.Sum(nil)), []byte(newFile), nil)
 					}
 				} else {
@@ -119,7 +124,7 @@ func (p *Place) find(hash []byte) string {
 	return string(file)
 }
 
-func (p *Place) move(t types.Type, file string, info os.FileInfo) (string, error) {
+func (p *Place) moveName(t types.Type, file string, info os.FileInfo) (string, error) {
 	log.Debugf("mime: %s, subtype: %s, 搬移文件: %s", t.MIME.Type, t.MIME.Subtype, file)
 	ext := path.Ext(file)
 	for _, ap := range p.Config.Paths {
@@ -130,16 +135,9 @@ func (p *Place) move(t types.Type, file string, info os.FileInfo) (string, error
 					newDir = path.Join(newDir, TimeFormat(info.ModTime(), ap.Subdir))
 				}
 				dir := ToPath(newDir)
-				p.History.Files[file] = dir
 				newFile := path.Join(dir, path.Base(file))
 				info, err := os.Stat(newFile)
 				if os.IsNotExist(err) {
-					if p.Preview {
-						log.Infof("预览: %s >>> %s", file, newFile)
-					} else {
-						log.Infof("移动: %s >>> %s", file, newFile)
-						os.Rename(file, newFile)
-					}
 					return newFile, nil
 				}
 				if info.IsDir() {
@@ -196,11 +194,60 @@ func (p *Place) scanning(dir string) {
 				key := BytesPrefix("f-", hash.Sum(nil))
 				old, err := p.Db.Get(key, nil)
 				if err == nil {
-					log.Warnf("文件重复: %s = %s", filename, old)
+					if filename != string(old) {
+						log.Warnf("文件重复: %s = %s", filename, old)
+					}
 				} else {
 					log.Info("新增文件: ", filename)
 					p.Db.Put(key, []byte(filename), nil)
 				}
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		log.Error("目录扫描错误: ", err)
+	}
+}
+
+func (p *Place) Reset() {
+	log.Info("开始根据配置重置目录")
+
+	p.TmpFile = make(map[string][]byte)
+	iter := p.Db.NewIterator(util.BytesPrefix([]byte("f-")), nil)
+	for iter.Next() {
+		file := string(iter.Value())
+		p.TmpFile[file] = iter.Key()
+		log.Debug("缓存文件: ", file)
+	}
+	iter.Release()
+
+	for _, ap := range p.Config.Paths {
+		log.Debug("扫描目录: ", ap.Dir)
+		p.reset(ToPath(ap.Dir))
+	}
+}
+
+func (p *Place) reset(dir string) {
+	err := filepath.Walk(dir, func(filename string, fi os.FileInfo, err error) error {
+		if filename == dir {
+			return nil
+		}
+		if fi.IsDir() {
+			p.reset(filename)
+		} else {
+			log.Debug("重置文件: ", filename)
+			bs, _ := ioutil.ReadFile(filename)
+			head := bs[:261]
+			kind, _ := filetype.Match(head)
+			newFile, err := p.moveName(kind, filename, fi)
+			if err != nil || newFile == filename {
+				log.Debug("无需移动: ", filename)
+			} else {
+				log.Infof("移动: %s >>> %s", filename, newFile)
+				os.Rename(filename, newFile)
+				key, _ := p.TmpFile[filename]
+				p.Db.Put(key, []byte(newFile), nil)
 			}
 		}
 		return nil
