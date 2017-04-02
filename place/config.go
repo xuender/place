@@ -62,10 +62,45 @@ func (c *Config) def() {
 			Subdir:  "yyyy/mm",
 		},
 		&Path{
+			Dir:     "~/文档/归档",
+			Mime:    "application",
+			Subtype: "x-7z-compressed",
+			Subdir:  "yyyy",
+		},
+		&Path{
 			Dir:     "~/文档/设计",
 			Mime:    "application",
 			Subtype: "zip",
 			Ext:     ".xmind",
+		},
+		&Path{
+			Dir:    "~/文档/办公",
+			Ext:    ".ppt",
+			Subdir: "yyyy",
+		},
+		&Path{
+			Dir:     "~/文档/办公",
+			Mime:    "application",
+			Subtype: "zip",
+			Ext:     ".pptx",
+			Subdir:  "yyyy",
+		},
+		&Path{
+			Dir:     "~/文档/办公",
+			Mime:    "application",
+			Subtype: "zip",
+			Ext:     ".docx",
+			Subdir:  "yyyy",
+		},
+		&Path{
+			Dir:    "~/文档/办公",
+			Ext:    ".doc",
+			Subdir: "yyyy",
+		},
+		&Path{
+			Dir:     "~/文档/图书",
+			Mime:    "application",
+			Subtype: "pdf",
 		},
 	}
 }

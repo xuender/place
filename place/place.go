@@ -90,28 +90,24 @@ func (p *Place) run(file string) {
 		hash.Write(bs)
 		log.Debugf("%s sha256: %x", file, hash.Sum(nil))
 		kind, _ := filetype.Match(head)
-		if kind == filetype.Unknown {
-			log.Debug("未知的文件类型")
-		} else {
-			log.Debugf("扩展文件名: %s type: %s, subType: %s", path.Ext(file), kind.MIME.Type, kind.MIME.Subtype)
-			old := p.find(hash.Sum(nil))
-			if old == "" {
-				newFile, err := p.moveName(kind, file, info)
-				if err == nil {
-					if p.Preview {
-						log.Infof("预览: %s >>> %s", file, newFile)
-					} else {
-						log.Infof("移动: %s >>> %s", file, newFile)
-						p.History.Files[file] = newFile
-						os.Rename(file, newFile)
-						p.Db.Put(BytesPrefix("f-", hash.Sum(nil)), []byte(newFile), nil)
-					}
+		log.Debugf("扩展文件名: %s type: %s", path.Ext(file), kind)
+		old := p.find(hash.Sum(nil))
+		if old == "" {
+			newFile, err := p.moveName(kind, file, info)
+			if err == nil {
+				if p.Preview {
+					log.Infof("预览: %s >>> %s", file, newFile)
 				} else {
-					log.Errorf("%s: %s", file, err)
+					log.Infof("移动: %s >>> %s", file, newFile)
+					p.History.Files[file] = newFile
+					os.Rename(file, newFile)
+					p.Db.Put(BytesPrefix("f-", hash.Sum(nil)), []byte(newFile), nil)
 				}
 			} else {
-				log.Warnf("文件 %s 重复, 原文件 %s", file, old)
+				log.Errorf("%s: %s", file, err)
 			}
+		} else {
+			log.Warnf("文件 %s 重复, 原文件 %s", file, old)
 		}
 	}
 }
@@ -128,7 +124,8 @@ func (p *Place) moveName(t types.Type, file string, info os.FileInfo) (string, e
 	log.Debugf("mime: %s, subtype: %s, 搬移文件: %s", t.MIME.Type, t.MIME.Subtype, file)
 	ext := path.Ext(file)
 	for _, ap := range p.Config.Paths {
-		if ap.Mime == t.MIME.Type && ap.Subtype == t.MIME.Subtype {
+		if (ap.Mime == t.MIME.Type && ap.Subtype == t.MIME.Subtype) ||
+			(ap.Mime == "" && ap.Subtype == "" && t == filetype.Unknown) {
 			if ap.Ext == "" || ap.Ext == ext {
 				newDir := ap.Dir
 				if ap.Subdir != "" {
