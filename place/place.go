@@ -226,10 +226,12 @@ func (p *Place) Reset() {
 }
 
 func (p *Place) reset(dir string) {
+	count := 0
 	err := filepath.Walk(dir, func(filename string, fi os.FileInfo, err error) error {
 		if filename == dir {
 			return nil
 		}
+		count += 1
 		if fi.IsDir() {
 			p.reset(filename)
 		} else {
@@ -249,7 +251,13 @@ func (p *Place) reset(dir string) {
 		}
 		return nil
 	})
-	if err != nil {
+	if err == nil {
+		log.Debugf("%s 子文件数量: %d", dir, count)
+		if count == 0 {
+			log.Info("删除空目录: ", dir)
+			os.Remove(dir)
+		}
+	} else {
 		log.Error("目录扫描错误: ", err)
 	}
 }
