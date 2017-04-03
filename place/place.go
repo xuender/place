@@ -125,33 +125,35 @@ func (p *Place) moveName(t types.Type, file string, info os.FileInfo) (string, e
 	log.Debugf("mime: %s, subtype: %s, 搬移文件: %s", t.MIME.Type, t.MIME.Subtype, file)
 	ext := path.Ext(file)
 	for _, ap := range p.Config.Paths {
-		if matching(ap, t, ext) {
-			newDir := ap.Dir
-			if ap.Subdir != "" {
-				newDir = path.Join(newDir, TimeFormat(info.ModTime(), ap.Subdir))
-			}
-			dir := ToPath(newDir)
-			newFile := path.Join(dir, path.Base(file))
-			info, err := os.Stat(newFile)
-			if os.IsNotExist(err) {
-				return newFile, nil
-			}
-			if info.IsDir() {
-				return file, errors.New("同名目录已经存在")
-			} else {
-				return file, errors.New("同名文件已经存在")
+		for _, apExt := range Split(ap.Ext) {
+			if matching(ap, t, ext, apExt) {
+				newDir := ap.Dir
+				if ap.Subdir != "" {
+					newDir = path.Join(newDir, TimeFormat(info.ModTime(), ap.Subdir))
+				}
+				dir := ToPath(newDir)
+				newFile := path.Join(dir, path.Base(file))
+				info, err := os.Stat(newFile)
+				if os.IsNotExist(err) {
+					return newFile, nil
+				}
+				if info.IsDir() {
+					return file, errors.New("同名目录已经存在")
+				} else {
+					return file, errors.New("同名文件已经存在")
+				}
 			}
 		}
 	}
 	return file, errors.New("无匹配设置")
 }
 
-func matching(ap *Path, t types.Type, ext string) bool {
+func matching(ap *Path, t types.Type, ext string, apExt string) bool {
 	subType := strings.ToLower(ap.Subtype)
-	if (strings.EqualFold(ap.Mime, t.MIME.Type) && strings.Index(t.MIME.Subtype, subType) == 0) ||
+	if (strings.EqualFold(ap.Mime, t.MIME.Type) && strings.HasPrefix(t.MIME.Subtype, subType)) ||
 		(ap.Mime == "" && ap.Subtype == "" && t == filetype.Unknown) ||
 		(strings.EqualFold(ap.Mime, t.MIME.Type) && ap.Subtype == "") {
-		if ap.Ext == "" || strings.EqualFold(ap.Ext, ext) {
+		if apExt == "" || strings.EqualFold(apExt, ext) {
 			return true
 		}
 	}

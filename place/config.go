@@ -88,22 +88,10 @@ func (c *Config) def() {
 			Ext:     ".xmind",
 		},
 		&Path{
-			Dir:    "~/文档/办公",
-			Ext:    ".ppt",
-			Subdir: "yyyy",
-		},
-		&Path{
 			Dir:     "~/文档/办公",
 			Mime:    "application",
 			Subtype: "zip",
-			Ext:     ".pptx",
-			Subdir:  "yyyy",
-		},
-		&Path{
-			Dir:     "~/文档/办公",
-			Mime:    "application",
-			Subtype: "zip",
-			Ext:     ".docx",
+			Ext:     ".pptx, .docx",
 			Subdir:  "yyyy",
 		},
 		&Path{
@@ -115,6 +103,10 @@ func (c *Config) def() {
 			Dir:     "~/文档/图书",
 			Mime:    "application",
 			Subtype: "pdf",
+		},
+		&Path{
+			Dir: "~/文档/图书",
+			Ext: ".mobi",
 		},
 	}
 }
