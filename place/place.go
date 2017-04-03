@@ -125,7 +125,8 @@ func (p *Place) moveName(t types.Type, file string, info os.FileInfo) (string, e
 	ext := path.Ext(file)
 	for _, ap := range p.Config.Paths {
 		if (ap.Mime == t.MIME.Type && ap.Subtype == t.MIME.Subtype) ||
-			(ap.Mime == "" && ap.Subtype == "" && t == filetype.Unknown) {
+			(ap.Mime == "" && ap.Subtype == "" && t == filetype.Unknown) ||
+			(ap.Mime == t.MIME.Type && ap.Subtype == "") {
 			if ap.Ext == "" || ap.Ext == ext {
 				newDir := ap.Dir
 				if ap.Subdir != "" {

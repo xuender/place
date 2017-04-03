@@ -62,6 +62,11 @@ func (c *Config) def() {
 			Subdir:  "yyyy/mm",
 		},
 		&Path{
+			Dir:    "~/视频",
+			Mime:   "video",
+			Subdir: "yyyy",
+		},
+		&Path{
 			Dir:     "~/文档/归档",
 			Mime:    "application",
 			Subtype: "x-7z-compressed",
