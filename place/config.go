@@ -67,6 +67,15 @@ func (c *Config) def() {
 			Subdir: "yyyy",
 		},
 		&Path{
+			Dir:  "~/音乐",
+			Mime: "audio",
+		},
+		&Path{
+			Dir:     "~/文档/字体",
+			Mime:    "application",
+			Subtype: "font-",
+		},
+		&Path{
 			Dir:     "~/文档/归档",
 			Mime:    "application",
 			Subtype: "x-7z-compressed",
@@ -99,7 +108,7 @@ func (c *Config) def() {
 		},
 		&Path{
 			Dir:    "~/文档/办公",
-			Ext:    ".doc",
+			Ext:    ".doc .ppt",
 			Subdir: "yyyy",
 		},
 		&Path{
