@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -124,10 +125,10 @@ func (p *Place) moveName(t types.Type, file string, info os.FileInfo) (string, e
 	log.Debugf("mime: %s, subtype: %s, 搬移文件: %s", t.MIME.Type, t.MIME.Subtype, file)
 	ext := path.Ext(file)
 	for _, ap := range p.Config.Paths {
-		if (ap.Mime == t.MIME.Type && ap.Subtype == t.MIME.Subtype) ||
+		if (strings.EqualFold(ap.Mime, t.MIME.Type) && strings.EqualFold(ap.Subtype, t.MIME.Subtype)) ||
 			(ap.Mime == "" && ap.Subtype == "" && t == filetype.Unknown) ||
-			(ap.Mime == t.MIME.Type && ap.Subtype == "") {
-			if ap.Ext == "" || ap.Ext == ext {
+			(strings.EqualFold(ap.Mime, t.MIME.Type) && ap.Subtype == "") {
+			if ap.Ext == "" || strings.EqualFold(ap.Ext, ext) {
 				newDir := ap.Dir
 				if ap.Subdir != "" {
 					newDir = path.Join(newDir, TimeFormat(info.ModTime(), ap.Subdir))
