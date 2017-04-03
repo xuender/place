@@ -83,11 +83,6 @@ func (c *Config) def() {
 			Mime: "audio",
 		},
 		&Path{
-			Dir:     "~/文档/字体",
-			Mime:    "application",
-			Subtype: "font-",
-		},
-		&Path{
 			Dir:     "~/文档/设计",
 			Mime:    "application",
 			Subtype: "zip",
@@ -97,6 +92,16 @@ func (c *Config) def() {
 			Dir:     "~/文档/设计",
 			Mime:    "image",
 			Subtype: "vnd.adobe.photoshop, image/x-icon, vnd.ms-photo",
+		},
+		&Path{
+			Dir:     "~/文档/设计",
+			Mime:    "application",
+			Subtype: "postscript",
+		},
+		&Path{
+			Dir:     "~/文档/游戏",
+			Mime:    "application",
+			Subtype: "x-nintendo-nes-rom",
 		},
 		&Path{
 			Dir:     "~/文档/办公",
@@ -124,6 +129,16 @@ func (c *Config) def() {
 		&Path{
 			Dir: "~/文档/图书",
 			Ext: ".mobi",
+		},
+		&Path{
+			Dir:     "~/文档/字体",
+			Mime:    "application",
+			Subtype: "font-, octet-stream",
+		},
+		&Path{
+			Dir:     "~/文档/数据库",
+			Mime:    "application",
+			Subtype: "x-sqlite3",
 		},
 		&Path{
 			Dir:     "~/文档/归档",
