@@ -79,6 +79,11 @@ func (c *Config) def() {
 			Subdir: "yyyy",
 		},
 		&Path{
+			Dir:    "~/视频/资源",
+			Ext:    ".torrent",
+			Subdir: "yyyy",
+		},
+		&Path{
 			Dir:  "~/音乐",
 			Mime: "audio",
 		},
@@ -87,6 +92,10 @@ func (c *Config) def() {
 			Mime:    "application",
 			Subtype: "zip",
 			Ext:     ".xmind",
+		},
+		&Path{
+			Dir: "~/文档/设计",
+			Ext: ".mm, .xcf",
 		},
 		&Path{
 			Dir:     "~/文档/设计",
@@ -118,7 +127,7 @@ func (c *Config) def() {
 		},
 		&Path{
 			Dir:    "~/文档/办公",
-			Ext:    ".doc .ppt",
+			Ext:    ".doc, .docx, .ppt, .pps",
 			Subdir: "yyyy",
 		},
 		&Path{
@@ -136,9 +145,13 @@ func (c *Config) def() {
 			Subtype: "font-, octet-stream",
 		},
 		&Path{
-			Dir:     "~/文档/数据库",
+			Dir:     "~/文档/数据",
 			Mime:    "application",
 			Subtype: "x-sqlite3",
+		},
+		&Path{
+			Dir: "~/文档/数据",
+			Ext: ".csv, .sql",
 		},
 		&Path{
 			Dir:     "~/文档/归档",
