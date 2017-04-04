@@ -91,11 +91,12 @@ func (c *Config) def() {
 			Dir:     "~/文档/设计",
 			Mime:    "application",
 			Subtype: "zip",
-			Ext:     ".xmind, .odg, .odf",
+			Ext:     ".xmind",
 		},
 		&Path{
-			Dir: "~/文档/设计",
-			Ext: ".mm, .xcf",
+			Dir:     "~/文档/设计",
+			Mime:    "application",
+			Subtype: "x-freemind, x-xcf",
 		},
 		&Path{
 			Dir:     "~/文档/设计",
@@ -116,19 +117,14 @@ func (c *Config) def() {
 			Dir:     "~/文档/办公",
 			Mime:    "application",
 			Subtype: "zip",
-			Ext:     ".pptx, .docx, .xlsx, .odt, .odp, .ods",
+			Ext:     ".pptx, .docx, .xlsx",
 			Subdir:  "yyyy",
 		},
 		&Path{
 			Dir:     "~/文档/办公",
 			Mime:    "application",
-			Subtype: "rtf",
+			Subtype: "rtf, msword, vnd.ms-powerpoint, vnd.ms-office, vnd.oasis.opendocument",
 			Subdir:  "yyyy",
-		},
-		&Path{
-			Dir:    "~/文档/办公",
-			Ext:    ".doc, .docx, .ppt, .pps, .xls, .wps, .et, .dps",
-			Subdir: "yyyy",
 		},
 		&Path{
 			Dir:     "~/文档/图书",
@@ -142,7 +138,7 @@ func (c *Config) def() {
 		&Path{
 			Dir:     "~/文档/字体",
 			Mime:    "application",
-			Subtype: "font-, octet-stream",
+			Subtype: "font-",
 		},
 		&Path{
 			Dir:     "~/文档/数据",

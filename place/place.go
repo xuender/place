@@ -90,7 +90,7 @@ func (p *Place) run(file string) {
 		hash := sha256.New()
 		hash.Write(bs)
 		log.Debugf("%s sha256: %x", file, hash.Sum(nil))
-		kind, _ := filetype.Match(head)
+		kind := Mime(head, file)
 		old := p.find(hash.Sum(nil))
 		if old == "" {
 			newFile, err := p.moveName(kind, file, info)
