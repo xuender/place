@@ -157,6 +157,8 @@ func getDb(c *cli.Context) *leveldb.DB {
 	return db
 }
 func actionInit(c *cli.Context) {
+	log.SetOutput(os.Stdout)
+	log.SetFormatter(&log.TextFormatter{DisableTimestamp: true})
 	if c.GlobalBool("debug") {
 		log.SetLevel(log.DebugLevel)
 	}
