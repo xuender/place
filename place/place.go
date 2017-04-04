@@ -77,7 +77,7 @@ func (p *Place) run(file string) {
 	}
 	log.Debugf("%s 目录: %t", file, info.IsDir())
 	if info.IsDir() {
-		log.Info("处理目录: ", file)
+		log.Info("忽略目录: ", file)
 	} else {
 		log.Debug("处理文件: ", file)
 		bs, _ := ioutil.ReadFile(file)
