@@ -91,7 +91,7 @@ func (c *Config) def() {
 			Dir:     "~/文档/设计",
 			Mime:    "application",
 			Subtype: "zip",
-			Ext:     ".xmind",
+			Ext:     ".xmind, .odg, .odf",
 		},
 		&Path{
 			Dir: "~/文档/设计",
@@ -116,7 +116,7 @@ func (c *Config) def() {
 			Dir:     "~/文档/办公",
 			Mime:    "application",
 			Subtype: "zip",
-			Ext:     ".pptx, .docx",
+			Ext:     ".pptx, .docx, .xlsx, .odt, .odp, .ods",
 			Subdir:  "yyyy",
 		},
 		&Path{
@@ -127,7 +127,7 @@ func (c *Config) def() {
 		},
 		&Path{
 			Dir:    "~/文档/办公",
-			Ext:    ".doc, .docx, .ppt, .pps",
+			Ext:    ".doc, .docx, .ppt, .pps, .xls, .wps, .et, .dps",
 			Subdir: "yyyy",
 		},
 		&Path{
@@ -151,7 +151,7 @@ func (c *Config) def() {
 		},
 		&Path{
 			Dir: "~/文档/数据",
-			Ext: ".csv, .sql",
+			Ext: ".csv, .sql, .json",
 		},
 		&Path{
 			Dir:     "~/文档/归档",
