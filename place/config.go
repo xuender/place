@@ -123,7 +123,7 @@ func (c *Config) def() {
 		&Path{
 			Dir:     "~/文档/办公",
 			Mime:    "application",
-			Subtype: "rtf, msword, vnd.ms-powerpoint, vnd.ms-office, vnd.oasis.opendocument",
+			Subtype: "rtf, msword, vnd.ms-powerpoint, vnd.ms-office, vnd.oasis.opendocument, vnd.ms-excel",
 			Subdir:  "yyyy",
 		},
 		&Path{
@@ -152,7 +152,7 @@ func (c *Config) def() {
 		&Path{
 			Dir:     "~/文档/归档",
 			Mime:    "application",
-			Subtype: "x-tar, x-rar-compressed, gzip, x-bzip2, x-7z-compressed, x-xz, x-unix-archive, x-compress, x-lzip",
+			Subtype: "x-tar, x-rar-compressed, gzip, x-bzip2, x-7z-compressed, x-xz, x-unix-archive, x-compress, x-lzip, x-iso9660-image",
 			Subdir:  "yyyy",
 		},
 		&Path{
