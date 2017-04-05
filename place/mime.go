@@ -21,7 +21,7 @@ func Mime(bs []byte, file string) types.Type {
 		cmd.Stdout = &out
 		err := cmd.Run()
 		if err == nil {
-			s := strings.Split(out.String(), " ")
+			s := strings.Split(out.String()[len(file):], " ")
 			if len(s) > 1 {
 				log.Debug("新类型: ", s[1])
 				return types.NewType(path.Ext(file), s[1][:len(s[1])-1])
