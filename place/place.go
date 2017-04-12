@@ -7,7 +7,6 @@ import (
 	"encoding/gob"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -91,7 +90,7 @@ func (p *Place) run(file string) {
 			return
 		}
 		reader := bufio.NewReader(f)
-		buffer := make([]byte, 16384)
+		buffer := make([]byte, 65536) // 缓存64K
 		hash := sha256.New()
 		isHead := true
 		for {
@@ -111,7 +110,6 @@ func (p *Place) run(file string) {
 			hash.Write(buffer[:count])
 		}
 		log.Debugf("%s sha256: %x", file, hash.Sum(nil))
-		// bs, _ := ioutil.ReadFile(file)
 		old := p.find(hash.Sum(nil))
 		if old == "" {
 			newFile, err := p.moveName(kind, file, info)
@@ -226,9 +224,23 @@ func (p *Place) scanning(dir string) {
 			if ok {
 				delete(p.TmpFile, filename)
 			} else {
-				bs, _ := ioutil.ReadFile(filename)
+				var (
+					count int
+					f     *os.File
+				)
+				if f, err = os.Open(filename); err != nil {
+					log.Errorf("文件 %s 无法读取", filename)
+					return err
+				}
+				reader := bufio.NewReader(f)
+				buffer := make([]byte, 65536) // 缓存64K
 				hash := sha256.New()
-				hash.Write(bs)
+				for {
+					if count, err = reader.Read(buffer); err != nil {
+						break
+					}
+					hash.Write(buffer[:count])
+				}
 				key := BytesPrefix("f-", hash.Sum(nil))
 				old, err := p.Db.Get(key, nil)
 				if err == nil {
@@ -277,9 +289,18 @@ func (p *Place) reset(dir string) {
 			p.reset(filename)
 		} else {
 			log.Debug("重置文件: ", filename)
-			bs, _ := ioutil.ReadFile(filename)
-			head := bs[:261]
-			kind, _ := filetype.Match(head)
+			var (
+				f    *os.File
+				kind types.Type
+			)
+			if f, err = os.Open(filename); err != nil {
+				log.Errorf("文件 %s 无法读取", filename)
+				return err
+			}
+			reader := bufio.NewReader(f)
+			head := make([]byte, 261) // 缓存64K
+			reader.Read(head)
+			kind, _ = filetype.Match(head)
 			newFile, err := p.moveName(kind, filename, fi)
 			if err != nil || newFile == filename {
 				log.Debug("无需移动: ", filename)
