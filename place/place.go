@@ -1,6 +1,7 @@
 package place
 
 import (
+	"bufio"
 	"bytes"
 	"crypto/sha256"
 	"encoding/gob"
@@ -80,17 +81,37 @@ func (p *Place) run(file string) {
 		log.Info("忽略目录: ", file)
 	} else {
 		log.Debug("处理文件: ", file)
-		bs, _ := ioutil.ReadFile(file)
-		head := bs[:261]
-		if filetype.IsImage(head) {
-			log.Debugf("文件 %s 是图片", file)
-		} else {
-			log.Debugf("文件 %s 不是图片", file)
+		var (
+			f     *os.File
+			count int
+			kind  types.Type
+		)
+		if f, err = os.Open(file); err != nil {
+			log.Errorf("文件 %s 无法读取", file)
+			return
 		}
+		reader := bufio.NewReader(f)
+		buffer := make([]byte, 16384)
 		hash := sha256.New()
-		hash.Write(bs)
+		isHead := true
+		for {
+			if count, err = reader.Read(buffer); err != nil {
+				break
+			}
+			if isHead {
+				isHead = false
+				head := buffer[:261]
+				if filetype.IsImage(head) {
+					log.Debugf("文件 %s 是图片", file)
+				} else {
+					log.Debugf("文件 %s 不是图片", file)
+				}
+				kind = Mime(head, file)
+			}
+			hash.Write(buffer[:count])
+		}
 		log.Debugf("%s sha256: %x", file, hash.Sum(nil))
-		kind := Mime(head, file)
+		// bs, _ := ioutil.ReadFile(file)
 		old := p.find(hash.Sum(nil))
 		if old == "" {
 			newFile, err := p.moveName(kind, file, info)
