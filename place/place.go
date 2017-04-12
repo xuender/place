@@ -3,7 +3,6 @@ package place
 import (
 	"bufio"
 	"bytes"
-	"crypto/sha256"
 	"encoding/gob"
 	"errors"
 	"fmt"
@@ -80,37 +79,19 @@ func (p *Place) run(file string) {
 		log.Info("忽略目录: ", file)
 	} else {
 		log.Debug("处理文件: ", file)
-		var (
-			f     *os.File
-			count int
-			kind  types.Type
-		)
-		if f, err = os.Open(file); err != nil {
+		sum, head, errs := Hash(file)
+		if errs != nil {
 			log.Errorf("文件 %s 无法读取", file)
 			return
 		}
-		reader := bufio.NewReader(f)
-		buffer := make([]byte, 65536) // 缓存64K
-		hash := sha256.New()
-		isHead := true
-		for {
-			if count, err = reader.Read(buffer); err != nil {
-				break
-			}
-			if isHead {
-				isHead = false
-				head := buffer[:261]
-				if filetype.IsImage(head) {
-					log.Debugf("文件 %s 是图片", file)
-				} else {
-					log.Debugf("文件 %s 不是图片", file)
-				}
-				kind = Mime(head, file)
-			}
-			hash.Write(buffer[:count])
+		if filetype.IsImage(head) {
+			log.Debugf("文件 %s 是图片", file)
+		} else {
+			log.Debugf("文件 %s 不是图片", file)
 		}
-		log.Debugf("%s sha256: %x", file, hash.Sum(nil))
-		old := p.find(hash.Sum(nil))
+		kind := Mime(head, file)
+		log.Debugf("%s sha256: %x", file, sum)
+		old := p.find(sum)
 		if old == "" {
 			newFile, err := p.moveName(kind, file, info)
 			if err == nil {
@@ -120,7 +101,7 @@ func (p *Place) run(file string) {
 					log.Infof("移动: %s >>> %s", file, newFile)
 					p.History.Files[file] = newFile
 					os.Rename(file, newFile)
-					p.Db.Put(BytesPrefix("f-", hash.Sum(nil)), []byte(newFile), nil)
+					p.Db.Put(BytesPrefix("f-", sum), []byte(newFile), nil)
 				}
 			} else {
 				log.Errorf("%s %s Mime: %s, Subtype: %s", err, file, kind.MIME.Type, kind.MIME.Subtype)
@@ -224,24 +205,12 @@ func (p *Place) scanning(dir string) {
 			if ok {
 				delete(p.TmpFile, filename)
 			} else {
-				var (
-					count int
-					f     *os.File
-				)
-				if f, err = os.Open(filename); err != nil {
+				sum, _, errs := Hash(filename)
+				if errs != nil {
 					log.Errorf("文件 %s 无法读取", filename)
-					return err
+					return errs
 				}
-				reader := bufio.NewReader(f)
-				buffer := make([]byte, 65536) // 缓存64K
-				hash := sha256.New()
-				for {
-					if count, err = reader.Read(buffer); err != nil {
-						break
-					}
-					hash.Write(buffer[:count])
-				}
-				key := BytesPrefix("f-", hash.Sum(nil))
+				key := BytesPrefix("f-", sum)
 				old, err := p.Db.Get(key, nil)
 				if err == nil {
 					if filename != string(old) {
