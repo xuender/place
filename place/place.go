@@ -91,7 +91,7 @@ func (p *Place) run(file string) {
 			return
 		}
 		reader := bufio.NewReader(f)
-		buffer := make([]byte, 16384)
+		buffer := make([]byte, 65536) // 缓存64K
 		hash := sha256.New()
 		isHead := true
 		for {
